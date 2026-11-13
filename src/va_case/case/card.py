@@ -141,12 +141,19 @@ class CaseCard(ttk.Frame):
         self._attach_autocomplete()
 
     def _wrap_notes(self, width):
+        """注記を、欄の幅で折り返す。
+
+        折り返した注記が、与えられた幅より広くならないよう、全角2字分の余りをとって折り返す（2026-11-14 に直した。
+        それまでは幅いっぱいで折り返していて、句読点を前の行に付ける折り返し〔wrap_text〕で、行が幅より1画素広く
+        なることがあった。注記は「その他」の列の幅を決める欄の1つなので、広くなると列が広がり、広がった幅で折り返し
+        直すと狭くなって列が戻り、これを繰り返して画面が止まった〔窓の幅 1280 で、349 と 350 を行き来した。公開の前の、
+        サイトの画面を撮る作業で見つかった〕）。余りをとれば、注記が列を広げることはなく、繰り返さない。"""
         if width == self._notes_width:
             return
         self._notes_width = width
         font = tkfont.nametofont(self.notes.cget("font") or "TkDefaultFont")
-        self.notes.configure(text=wrap_text(DATE_NOTE + autocomplete.NOTE, font, max(width, 100)),
-                             wraplength=max(width, 100) + 1)
+        room = max(width - 2 * font.measure("国"), 100)
+        self.notes.configure(text=wrap_text(DATE_NOTE + autocomplete.NOTE, font, room), wraplength=room + 1)
 
     # ------------------------------------------------------------ 欄
 

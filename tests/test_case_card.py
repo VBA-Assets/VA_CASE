@@ -168,3 +168,22 @@ def test_notes_wrap_to_width(root):
     assert card.notes.cget("text").startswith("日付は")                 # 状態の文（閲覧モードです など）は出さない
     assert not hasattr(card, "state_var")
     card.destroy()
+
+
+def test_notes_never_ask_wider_than_given(root):
+    """折り返した注記が、与えられた幅より広い幅を求めない（2026-11-14 に直した不具合。窓の幅 1280 で、注記の幅が
+    349 と 350 を行き来し、画面が止まった）。広い幅を求めると「その他」の列が広がり、折り返し直しを繰り返す。"""
+    import tkinter.font as tkfont
+    card = make_card(root, [], [])
+    root.update()
+    # 句読点を前の行に付けると、行が折り返しの幅より1字広くなることがある。そのため、全角1字分以上の余りを残す
+    # ことを確かめる（試験の環境の字の大きさによらず、余りがあれば、列を広げることはない）
+    char = tkfont.nametofont(str(card.notes.cget("font")) or "TkDefaultFont").measure("国")
+    over = []
+    for width in range(300, 701):
+        card._wrap_notes(width)
+        card.notes.update_idletasks()
+        if card.notes.winfo_reqwidth() > width - char:
+            over.append((width, card.notes.winfo_reqwidth()))
+    assert not over, over[:5]
+    card.destroy()
