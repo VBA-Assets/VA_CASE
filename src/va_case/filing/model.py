@@ -197,6 +197,15 @@ def active_cases(case_tables):
     return out
 
 
+def closed_case_names(case_tables):
+    """VA Case で終了した事件（現況が終了か、データフォルダを保管庫へ移したもの）の事件呼名の集まり。同じ事件呼名の
+    終了していない事件があれば含めない。case_tables が None なら空（VA Case を使わない・読めない）。"""
+    from ..case import model as cm
+    if case_tables is None or cm.CASE not in case_tables:
+        return set()
+    return {_case_name_of(r) for r in case_tables[cm.CASE].rows if _is_closed(r)} - set(active_cases(case_tables))
+
+
 def dest_folder(value, case_row):
     """保管先の表の保管フォルダの値を、使う値にする。「（データフォルダ）\\scan」は、VA Case の事件のデータフォルダの中の
     scan にする（事件がない・データフォルダが空なら ""）。"""
@@ -270,9 +279,12 @@ def case_candidates(case_tables, dest_rows, folder_exists=None, hidden=()):
         out.append(c)
     # ふりがなの順。同じふりがな（同じ依頼者）なら VA Case の表の順のまま。ふりがながなければ最後
     out.sort(key=lambda c: normalize(c.kana) if c.kana else "\uffff")
-    # VA Case にない保管先（「（文献）」など）。「（データフォルダ）\…」の行は、VA Case の事件がなければ使えないので出さない
+    # VA Case にない保管先（「（文献）」など）。「（データフォルダ）\…」の行は、VA Case の事件がなければ使えないので出さない。
+    # VA Case で終了した事件について覚えた行も出さない（2026-11-14 に直した。それまでは、そのフォルダがまだあると、
+    # 次に保管して表から消える〔prune_destinations〕まで、VA Case にない保管先として出た）
+    closed = closed_case_names(case_tables)
     others = [Candidate(name, "", r[1], r[2]) for name, r in remembered_rows.items()
-              if name not in cases and not r[1].startswith(IN_DATA_FOLDER)]
+              if name not in cases and name not in closed and not r[1].startswith(IN_DATA_FOLDER)]
     for c in others:
         c.search = normalize(c.name)
     others.sort(key=lambda c: normalize(c.name))
@@ -321,11 +333,7 @@ def prune_destinations(tables, case_tables, missing=()):
     case_tables が None（VA Case の共有データを読めなかった・使わない）なら、終了した事件の行は除かない。
     → (新しい tables, 除いた数)
     """
-    from ..case import model as cm
-
-    closed = set()
-    if case_tables is not None and cm.CASE in case_tables:
-        closed = {_case_name_of(r) for r in case_tables[cm.CASE].rows if _is_closed(r)} - set(active_cases(case_tables))
+    closed = closed_case_names(case_tables)
     rows = tables[DEST].rows
     keep = [r for r in rows if r[0] not in closed and r[0] not in missing]
     if len(keep) == len(rows):

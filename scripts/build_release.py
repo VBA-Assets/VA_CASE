@@ -1,4 +1,4 @@
-"""配布用のリリース（release_VerNNN\\VA_Case_VerNNN\\ と dist\\VA_Case_VerNNN.zip）を組み立てる。
+"""配布用のリリース（release_VerNNN\\VA_Case_VerNNN\\ と、dist\\ の zip）を組み立てる。
 
 VA Document の build_release.py と同じ作り。統合版のインストーラー（VA_Caseシリーズ共通\\統合版）は、
 release_VerNNN\\VA_Case_VerNNN\\ を直接参照する。
@@ -15,7 +15,13 @@ release_VerNNN\\VA_Case_VerNNN\\ を直接参照する。
 できるもの：
     release_Ver100\\VA_Case_Ver100\\  （VA_Case.exe・VA_Filing.exe・VA_Receipt.exe・VA_Call.exe・LICENSE・
                                       THIRD_PARTY_NOTICES.txt・README.md・マニュアル\\・source\\）
-    dist\\VA_Case_Ver100.zip          （上のフォルダを zip にしたもの）
+    dist\\VA_Case_Series_Ver100.zip   （上のフォルダを zip にしたもの。4つのツールが入る）
+    dist\\VA_Case_Ver100.zip・VA_Filing_Ver100.zip・VA_Receipt_Ver100.zip・VA_Call_Ver100.zip
+                                     （ツールごとの zip。サイトの「サンプル」の各ツールの記事に載せる。そのツールの
+                                      exe と、マニュアル・LICENSE・THIRD_PARTY_NOTICES.txt・README.md・source\\。
+                                      source は4つのツールで共通なので、どの zip にも全部入れる。2026-11-14 班長決定
+                                      「ツールごとの zip」。それまでは、4つのツールが入った zip を VA_Case_VerNNN.zip と
+                                      していた）
 release_*\\・dist\\ は、ビルドの生成物として git に入れない。
 """
 
@@ -85,16 +91,29 @@ def build(version: str) -> Path:
         dest.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(ROOT / f, dest)
 
-    zip_path = ROOT / "dist" / f"VA_Case_{version}.zip"
+    zip_path = ROOT / "dist" / f"VA_Case_Series_{version}.zip"
+    _zip(zip_path, stage, stage.name, lambda rel: True)
+    paths = [zip_path]
+    # ツールごとの zip：そのツールの exe だけを入れ、ほかの3つの exe は入れない
+    for exe in EXES:
+        tool = exe[:-4]                                   # VA_Case など
+        others = {e for e in EXES if e != exe}
+        path = ROOT / "dist" / f"{tool}_{version}.zip"
+        _zip(path, stage, f"{tool}_{version}", lambda rel, o=others: str(rel) not in o)
+        paths.append(path)
+    return paths
+
+
+def _zip(zip_path: Path, stage: Path, top: str, keep) -> None:
     with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as z:
         for p in sorted(stage.rglob("*")):
-            if p.is_file():
-                z.write(p, Path(stage.name) / p.relative_to(stage))
-    return zip_path
+            rel = p.relative_to(stage)
+            if p.is_file() and keep(rel):
+                z.write(p, Path(top) / rel)
 
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
         raise SystemExit("使い方：python scripts\\build_release.py Ver100")
-    path = build(sys.argv[1])
-    print(f"作りました：{path}（{path.stat().st_size:,} バイト）")
+    for path in build(sys.argv[1]):
+        print(f"作りました：{path}（{path.stat().st_size:,} バイト）")

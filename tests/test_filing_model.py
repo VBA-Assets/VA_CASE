@@ -267,3 +267,16 @@ def test_list_columns_follow_the_store_table():
     assert DISPLAY_COLUMNS == m.STORE_COLUMNS
     assert set(COLUMN_WIDTHS) == set(DISPLAY_COLUMNS)
 
+
+
+def test_closed_case_destinations_are_not_candidates():
+    """VA Case で終了した事件（現況が終了・保管庫へ移した事件）について覚えた保管先は、そのフォルダがまだあっても、
+    「VA Case にない保管先」として候補に出さない（2026-11-14 に直した不具合。それまでは、次に保管して表から消える
+    〔prune_destinations〕まで、候補に出た。操作マニュアル 5.5「終了した事件は出ません」）。VA Case を使わないときは、
+    今までどおり出す。"""
+    dest = [["癸山五郎（交通事故）", r"D:\事件\癸山五郎\scan", "佐"], ["乙山（相談）", r"D:\相談\乙山", ""],
+            ["民法（文献）", r"D:\文献", ""]]
+    names = [c.name for c in m.case_candidates(case_tables(), dest, folder_exists=lambda v: True)]
+    assert "癸山五郎（交通事故）" not in names and "乙山（相談）" not in names and "民法（文献）" in names
+    names = [c.name for c in m.case_candidates(None, dest, folder_exists=lambda v: True)]
+    assert "癸山五郎（交通事故）" in names                       # VA Case を使わない・読めないときは出す
