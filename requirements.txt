@@ -1,0 +1,27 @@
+# VA Caseシリーズ 依存ライブラリ
+# いずれもローカルで完結するもの（外部と通信しないことを選ぶ条件とする。CLAUDE.md の1）
+# 共有・ロック・設定・バックアップの共通部品は、標準ライブラリだけで作る。
+
+# 事件メモの PDF（2026-11-09 班長決定。BSD ライセンス）
+reportlab>=4.0
+
+# VA Filing・VA Receipt のプレビュー（2026-11-12 班長決定。VA FAX と同じ部品。pypdfium2 は Apache-2.0・BSD-3、
+# Pillow は MIT-CMU。PyMuPDF は AGPL のため使わない）
+pypdfium2>=5.0
+Pillow>=10.0
+
+# プレビューで囲んだ範囲の文字の読み取り（2026-11-13 班長決定「OCR も入れる」）。Windows に入っている文字認識
+# （Windows.Media.Ocr）を呼ぶ Microsoft の部品（MIT License）。読み取りは PC の中だけで行う。Windows でだけ入れる
+winrt-runtime>=3.2 ; sys_platform == "win32"
+winrt-Windows.Foundation>=3.2 ; sys_platform == "win32"
+winrt-Windows.Foundation.Collections>=3.2 ; sys_platform == "win32"
+winrt-Windows.Globalization>=3.2 ; sys_platform == "win32"
+winrt-Windows.Graphics.Imaging>=3.2 ; sys_platform == "win32"
+winrt-Windows.Media.Ocr>=3.2 ; sys_platform == "win32"
+winrt-Windows.Storage.Streams>=3.2 ; sys_platform == "win32"
+
+# テスト
+pytest>=8.0
+
+# 実行ファイル化（配布用）
+pyinstaller>=6.0
