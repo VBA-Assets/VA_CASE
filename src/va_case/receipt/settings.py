@@ -10,14 +10,13 @@ TOOL_KEY = "receipt"
 @dataclass
 class ReceiptConfig(ToolConfig):
     data_root: str = ""          # フォルダの値が相対パスのときの基点（PC ごとに同期フォルダの場所が違う場合）
-    window_geometry: str = ""
     # プレビュー（左側。2026-11-12 班長決定）を出すか・その幅（96 dpi のときの画素。0 は既定）。閉じるときに覚える
     preview_visible: bool = True
     preview_width: int = 0
 
     def __post_init__(self):
         super().__post_init__()
-        for name in ("data_root", "window_geometry"):
+        for name in ("data_root",):
             if not isinstance(getattr(self, name), str):
                 setattr(self, name, "")
         if not isinstance(self.preview_visible, bool):

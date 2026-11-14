@@ -1,4 +1,4 @@
-"""VA Call の、この PC の設定（共通の ToolConfig に、VA Call だけのものを足す）。"""
+"""VA Call の、この PC の設定（共通の ToolConfig のまま。VA Call だけのものは、いまはない）。"""
 from dataclasses import dataclass
 
 from ..common import config as common_config
@@ -9,12 +9,8 @@ TOOL_KEY = "call"
 
 @dataclass
 class CallConfig(ToolConfig):
-    window_geometry: str = ""
-
-    def __post_init__(self):
-        super().__post_init__()
-        if not isinstance(self.window_geometry, str):
-            self.window_geometry = ""
+    # ウィンドウの位置と大きさ（window_geometry）は、2026-11-14 に最大化（window_zoomed）とともに ToolConfig へ移した
+    pass
 
 
 def load():

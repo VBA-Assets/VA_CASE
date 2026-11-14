@@ -9,7 +9,7 @@ VA Case で作ったもの（2026-11-09）を、VA Filing などでも使える�
 - 一覧の動き（キー操作・加速・折り返し・何行かを選ぶ・コピー）は list_view.py の ListView から受け継ぐ
 - 事務所の設定の画面を出す仕組みは office_host.py の OfficeHost から受け継ぐ（2026-11-12 に分けた）
 - 診断情報（［ヘルプ］→［診断情報をコピー］）は diagnostics_host.py の DiagnosticsHost から受け継ぐ（同日に分けた）
-- 閉じるときの後始末
+- 閉じるときの後始末（ウィンドウの位置と大きさ・最大化を覚えるのは window_memory.py。2026-11-14）
 
 ツールごとの画面は、この SharedApp を受け継ぎ、クラスの属性（TITLE・TOOL など）と、_build_body・refresh を書く。
 """
@@ -36,6 +36,7 @@ from .tooltip import Tooltip
 from .list_view import ListView
 from .office_host import OfficeHost
 from .diagnostics_host import DiagnosticsHost
+from .window_memory import WindowMemory
 
 
 def prepare_process(app_id):
@@ -149,10 +150,8 @@ class SharedApp(DiagnosticsHost, OfficeHost, ListView):
         ime.follow_focus(root)      # IME の入力中の字を、入力欄の書体で出す（2026-11-11 班長決定）
         w, h = (int(x) for x in self.DEFAULT_GEOMETRY.split("x"))
         default = f"{theme.px(root, w)}x{theme.px(root, h)}"      # 拡大した画面では、その分大きく
-        try:
-            root.geometry(self.cfg.window_geometry or default)
-        except tk.TclError:
-            root.geometry(default)
+        self.window_memory = WindowMemory(root, self.cfg, default)   # 最大化して閉じたら、最大化して開く（2026-11-14）
+        self.window_memory.restore()
         self._build_menu()
         self.icons = IconSet(root)
         self._build_toolbar()
@@ -856,7 +855,7 @@ class SharedApp(DiagnosticsHost, OfficeHost, ListView):
             except OSError:
                 pass
         try:
-            self.cfg.window_geometry = self.root.geometry()
+            self.window_memory.remember()     # 最大化していないときの大きさと、最大化していたか
             self._remember_column_widths()
             self.remember_view()
             self.settings.save(self.cfg)

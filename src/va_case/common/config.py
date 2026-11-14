@@ -41,6 +41,12 @@ class ToolConfig:
     # 閉じるときに覚え、次に開いたときに戻す（2026-11-12 班長指示「フォームのサイズや列幅の設定を保存する」）
     office_size: str = ""
     office_column_widths: dict = field(default_factory=dict)
+    # ウィンドウの、最大化していないときの位置と大きさ（Tk の「幅x高さ+x+y」）と、閉じたときに最大化していたか。
+    # 閉じるときに覚え、次に起動したときに戻す（2026-11-14 班長指摘「VA CASEシリーズも最大化したことを覚えていない」。
+    # それまでは位置と大きさだけを覚え、最大化したまま閉じると、最大化した大きさを、ふつうの大きさとして覚えていた）。
+    # window_zoomed が None なのは、最大化を覚える前（Ver100）の設定（ui/window_memory.py）。4つのツールで共通
+    window_geometry: str = ""
+    window_zoomed: bool | None = None
 
     def __post_init__(self):
         for name in ("master_path", "backup_folder", "office_size"):
@@ -50,6 +56,22 @@ class ToolConfig:
         self.office_column_widths = _valid_widths(self.office_column_widths)
         if not re.fullmatch(r"\d{2,5}x\d{2,5}", self.office_size):
             self.office_size = ""
+        self.window_geometry = valid_window_geometry(self.window_geometry)
+        if not isinstance(self.window_zoomed, bool):
+            self.window_zoomed = None
+
+
+MIN_WINDOW_SIZE = 100   # これ以下の幅・高さは、画面を組む前（1x1 など）の大きさとして、覚えず、受け付けない（画素）
+
+
+def valid_window_geometry(value):
+    """覚えたウィンドウの位置と大きさ。形が違うか、幅・高さが MIN_WINDOW_SIZE 以下（画面を組む前の 1x1 など）なら ""（既定の大きさ）。"""
+    if not isinstance(value, str):
+        return ""
+    m = re.fullmatch(r"(\d{1,5})x(\d{1,5})(?:[+-]-?\d{1,5}[+-]-?\d{1,5})?", value)
+    if not m or int(m.group(1)) <= MIN_WINDOW_SIZE or int(m.group(2)) <= MIN_WINDOW_SIZE:
+        return ""
+    return value
 
 
 def valid_preview_width(value):

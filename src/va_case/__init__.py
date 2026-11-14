@@ -8,6 +8,7 @@
 """
 
 # 版番号（2026-11-14 班長決定「Ver100」。VA Document と同じ付け方で、4つのツールで同じ版にする。画面には「Ver100」と出す）
-__version__ = "1.0.0"
+# Ver101（2026-11-14）：最大化したまま閉じたら、次も最大化して開く（班長指摘「VA CASEシリーズも最大化したことを覚えていない」）
+__version__ = "1.0.1"
 VERSION_LABEL = "Ver" + __version__.replace(".", "")
 SERIES_NAME = "VA Caseシリーズ"

@@ -20,7 +20,7 @@ class DiagnosticsHost:
     CONFIG_LABELS = {
         "master_path": "共有データ", "case_master_path": "VA Case の共有データ", "backup_folder": "バックアップの置き場所",
         "data_root": "事務所のフォルダの場所", "outbox": "移送待ちの場所",
-        "zip_compress": "ZIP を圧縮する", "window_geometry": "ウィンドウの位置と大きさ", "column_widths": "覚えた列の幅",
+        "zip_compress": "ZIP を圧縮する", "window_geometry": "ウィンドウの位置と大きさ", "window_zoomed": "最大化して閉じた", "column_widths": "覚えた列の幅",
         "office_size": "事務所の設定の画面の大きさ", "office_column_widths": "事務所の設定の画面の覚えた列の幅",
         "preview_visible": "プレビューを表示する", "preview_width": "プレビューの幅",
     }
