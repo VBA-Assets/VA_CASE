@@ -91,6 +91,6 @@ def test_about_text_has_license():
     for cls in (CaseApp, FilingApp, ReceiptApp, CallApp):
         app = cls.__new__(cls)
         text = app.about_text()
-        assert text.startswith(f"{cls.TITLE}  Ver101\n") and cls.ABOUT_LINE and cls.ABOUT_LINE in text
+        assert text.startswith(f"{cls.TITLE}  Ver102\n") and cls.ABOUT_LINE and cls.ABOUT_LINE in text
         # VA FAX と同じ形（2026-11-14 班長指示「「について」の表示内容をVA FAXに合わせる。」）
-        assert text == f"{cls.TITLE}  Ver101\n{cls.ABOUT_LINE}\n\nVBAアセット（vba-assets.net）\nMIT License"
+        assert text == f"{cls.TITLE}  Ver102\n{cls.ABOUT_LINE}\n\nVBAアセット（vba-assets.net）\nMIT License"

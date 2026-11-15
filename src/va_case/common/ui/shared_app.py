@@ -28,7 +28,7 @@ from ..errors import ConflictError, LockedByOtherError, NotEditingError, SharedE
 from ..master import create_master
 from ..search import Query, normalize
 from ..store import SharedStore
-from . import ime, theme
+from . import ime, text_menu, theme
 from .background import Background
 from .icons import IconSet, icon_name
 from .ribbon import Ribbon
@@ -148,6 +148,7 @@ class SharedApp(DiagnosticsHost, OfficeHost, ListView):
         theme.apply_theme(root)
         set_window_icon(root, self.ICON_FILE)
         ime.follow_focus(root)      # IME の入力中の字を、入力欄の書体で出す（2026-11-11 班長決定）
+        text_menu.install(root)     # 入力欄の右クリックのメニュー（コピー・貼り付け。2026-11-15 班長指示）
         w, h = (int(x) for x in self.DEFAULT_GEOMETRY.split("x"))
         default = f"{theme.px(root, w)}x{theme.px(root, h)}"      # 拡大した画面では、その分大きく
         self.window_memory = WindowMemory(root, self.cfg, default)   # 最大化して閉じたら、最大化して開く（2026-11-14）

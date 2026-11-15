@@ -1,5 +1,6 @@
 """一覧の何行かを選ぶ操作とコピー、閲覧モードの選択の欄（2026-11-10 班長決定）の試験。氏名は架空。"""
 import tkinter as tk
+from types import SimpleNamespace
 from tkinter import ttk
 
 import pytest
@@ -234,17 +235,30 @@ def test_update_list_row_keeps_place_and_selection(root):
     root.withdraw()
 
 
-def test_copy_button_and_no_list_menu(root):
-    """リボンの［コピー］で、選んでいる行を見出しを付けずにコピーする。一覧の右クリックのメニューは出さない（2026-11-14
-    班長指示。4つのツールで同じ）。"""
+def test_copy_button_and_list_menu(root, monkeypatch):
+    """リボンの［コピー］で、選んでいる行を見出しを付けずにコピーする（2026-11-14 班長指示）。一覧の右クリックのメニュー
+    は、セルの中で選んだ文字の「コピー」だけ（2026-11-15 班長指示。行のコピーは出さない）。"""
     app = make_app(root)
     app._show_job = None
     app._select_range("1", "2", focus="1")
     app.copy_selected_rows()
     assert root.clipboard_get() == '甲野太郎\t1\r\n"乙山次郎\n丙川三郎"\t2\r\n'     # 見出しなし・選んだ2件
-    app.bind_list_copy(app.tree)
-    assert not app.tree.bind("<Button-3>") and not app._cell_text.bind("<Button-3>")
-    from va_case.call.app import CallApp
-    from va_case.case.app import CaseApp
-    from va_case.common.ui.file_store_app import FileStoreApp
-    assert not any(hasattr(c, "_list_menu") for c in (CallApp, CaseApp, FileStoreApp))
+    shown = []
+    monkeypatch.setattr(tk.Menu, "tk_popup", lambda self, x, y, entry="": shown.append(self))
+    for w in root.pack_slaves():                                   # ほかの試験の一覧は外す（セルが見えるように）
+        w.pack_forget()
+    app = shown_app(root)
+    for w in (app.tree, app._cell_text):
+        assert w.bind("<Button-3>")
+    app._cell_menu(SimpleNamespace(x_root=0, y_root=0))           # 文字を選んでいない
+    menu = shown[-1]
+    assert menu.index("end") == 0 and menu.entrycget(0, "label") == "コピー"
+    assert menu.entrycget(0, "state") == "disabled"
+    assert app._cell_show("2", "氏名")
+    app._cell_text.tag_add("sel", "1.2", "2.2")                    # 「次郎」から「丙川」まで
+    app._cell_menu(SimpleNamespace(x_root=0, y_root=0))
+    assert menu.index("end") == 0 and menu.entrycget(0, "state") == "normal"   # 「コピー」だけ（貼り付けはない）
+    app.cell_text_hide()                                           # メニューを開いている間に外れても
+    menu.invoke(0)
+    assert root.clipboard_get() == "次郎\n丙川" and "選んだ文字" in app.work_label.cget("text")
+    root.withdraw()

@@ -9,7 +9,7 @@ import tkinter as tk
 from tkinter import font as tkfont
 from tkinter import ttk
 
-from . import theme
+from . import text_menu, theme
 
 
 class CellText:
@@ -19,7 +19,8 @@ class CellText:
     # 「プレビューと同じように選択してコピーするようにはできないのか」）。ttk の一覧は文字の単位で選べないため、
     # セルの中でなぞり始めたら、そのセルに、同じ位置・同じ字・同じ色で、文字を選べる欄（tk.Text。直せない状態）を
     # 重ね、なぞった範囲を選ぶ。見た目は変わらない。
-    # - Ctrl+C でコピーする（右クリックのメニューは 2026-11-14 になくした）。選んだ後、Shift+左右の矢印キーで、範囲を1字ずつ変えられる。折り返して何行かになったセルも、全体に重ねる。
+    # - Ctrl+C か、右クリックの「コピー」でコピーする（右クリックのメニューは 2026-11-14 にいったんなくし、2026-11-15 に
+    #   「コピー」だけを戻した。_cell_menu）。選んだ後、Shift+左右の矢印キーで、範囲を1字ずつ変えられる。折り返して何行かになったセルも、全体に重ねる。
     #   コピーするのは、折り返しの改行を除いた、もとの値の文字。
     # - クリックは今までどおり行を選び、ダブルクリックは今までどおり（入力欄を開くなど）。セルの外までなぞったら、
     #   今までどおり何行かを選ぶ（行のコピー）。
@@ -55,6 +56,10 @@ class CellText:
         t.bind("<Shift-ButtonPress-1>", lambda e: (self._list_shift_click(self._tree_event(e)), "break")[1])
         t.bind("<MouseWheel>", self._cell_wheel)
         t.bind("<Shift-MouseWheel>", lambda e: (self.cell_text_hide(), self._wheel_x(e))[1])
+        # 右クリック：選んだ文字の「コピー」（2026-11-15 班長指示）。重ねた欄の上でも、Text の右クリックのメニュー
+        # （text_menu.install。折り返しの改行も入る）ではなく、もとの値の文字をコピーするこちらを出す
+        tree.bind("<Button-3>", self._cell_menu)
+        t.bind("<Button-3>", self._cell_menu)
         # キーボードの入力先は一覧のまま（矢印キーで行を動かし、Ctrl+C は copy_selection で、もとの値の文字をコピー
         # するため）
         t.bind("<FocusIn>", lambda e: self.tree.focus_set())
@@ -276,6 +281,15 @@ class CellText:
         if not mapped:
             return None
         return c["original"][min(mapped):max(mapped) + 1]
+
+    def _cell_menu(self, event):
+        """一覧の右クリック：セルの中で選んだ文字の「コピー」（Ctrl+C と同じ）。文字を選んでいなければ、押せない
+        「コピー」を出す（行のコピーは、リボンの［コピー］と Ctrl+C）。選んだ字は、メニューを開く前に覚えておく
+        （メニューを開くと入力先が移り、_cell_focus_out で選んだ字が外れることがあるため）。"""
+        text = self.cell_text_selected()
+        copy = (lambda: self._to_clipboard(text, "選んだ文字")) if text else None
+        text_menu.popup(self.tree, event.x_root, event.y_root, copy=copy)
+        return "break"
 
     def _cell_double(self, event):
         """ダブルクリックは、今までどおり一覧のダブルクリック（入力欄を開くなど）。字の単位では選ばない。"""
