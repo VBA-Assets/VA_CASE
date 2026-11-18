@@ -295,7 +295,7 @@ class TableEditor(ttk.Frame):
         self.tree.pack(fill="both", expand=True)
         bar = ttk.Frame(self)
         bar.pack(fill="x", pady=(6, 0))
-        for text, cmd in (("足す", self._add), ("直す", self._edit), ("消す", self._delete),
+        for text, cmd in (("足す", self._add), ("直す", self._edit), ("削除", self._delete),
                           ("上へ", lambda: self._move(-1)), ("下へ", lambda: self._move(1))):
             b = ttk.Button(bar, text=text, style="Small.TButton", command=cmd)
             b.pack(side="left", padx=(0, 6))

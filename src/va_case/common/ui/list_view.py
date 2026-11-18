@@ -18,6 +18,7 @@ from ..search import normalize
 from . import theme
 from .cell_text import CellText
 from .dialogs import wrap_text
+from .keys import ctrl_sequences
 
 
 class CharWidths:
@@ -67,8 +68,10 @@ class ListView(CellText):
             tree.bind(key, lambda e, mv=move: self._key_move(mv))
         tree.bind("<Home>", lambda e: self._scroll_x(0.0))
         tree.bind("<End>", lambda e: self._scroll_x(1.0))
-        tree.bind("<Control-Home>", lambda e: (self._move_selection("first"), self._scroll_x(0.0))[1])
-        tree.bind("<Control-End>", lambda e: (self._move_selection("last"), self._scroll_x(1.0))[1])
+        for seq in ctrl_sequences(tree, "Home"):     # Mac では ⌘ にも（keys.py）
+            tree.bind(seq, lambda e: (self._move_selection("first"), self._scroll_x(0.0))[1])
+        for seq in ctrl_sequences(tree, "End"):
+            tree.bind(seq, lambda e: (self._move_selection("last"), self._scroll_x(1.0))[1])
         tree.bind("<Left>", lambda e: (self.tree.xview_scroll(-self.H_STEP, "units"), "break")[1])
         tree.bind("<Right>", lambda e: (self.tree.xview_scroll(self.H_STEP, "units"), "break")[1])
         # 横のホイール（Shift＋ホイール・ホイールの左右・タッチパッドの横）。ttk の既定は 1目盛りで1画素しか動かず、
@@ -652,7 +655,8 @@ class FilterPopup(tk.Toplevel):
     def __init__(self, parent, column, values, checked, on_ok):
         super().__init__(parent)
         self.withdraw()
-        self.title(f"フィルタ　{column}")
+        # 題名は、する事の名前だけ（標準 01「ウィンドウとメッセージの題名」。2026-11-19 班長了承）。列の名前は中に出す
+        self.title("フィルタ")
         self.transient(parent)
         self.resizable(False, True)
         self.values = list(values)
@@ -660,6 +664,7 @@ class FilterPopup(tk.Toplevel):
         self.on_ok = on_ok
         f = ttk.Frame(self, padding=8)
         f.pack(fill="both", expand=True)
+        ttk.Label(f, text=f"列：{column}", style="Section.TLabel").pack(anchor="w", pady=(0, 6))
         ttk.Label(f, text="値を探す", style="Note.TLabel").pack(anchor="w")
         self.search_var = tk.StringVar()
         e = ttk.Entry(f, textvariable=self.search_var, width=30)

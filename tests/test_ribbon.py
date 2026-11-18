@@ -1,5 +1,4 @@
 """リボン（VA Document と同じ形。2026-11-13 班長指示「リボンのコマンドボタンをVA Documentのように変更」）の試験。"""
-import tkinter as tk
 from tkinter import ttk
 
 import pytest
@@ -7,17 +6,16 @@ import pytest
 from va_case.common.ui import theme
 from va_case.common.ui.icons import BUTTON_ICONS, ICON_DIR, IconSet, icon_name
 from va_case.common.ui.ribbon import Ribbon
+from conftest import reset_root
 
 
 @pytest.fixture(scope="module")
-def root():
-    try:
-        r = tk.Tk()
-    except tk.TclError:
-        pytest.skip("画面がない環境")
+def root(tk_root):   # Tk は試験の全体で1つ（conftest の tk_root）。この試験の後で、作った部品を片付ける
+    r = tk_root
+    r.deiconify()
     theme.apply_theme(r)
     yield r
-    r.destroy()
+    reset_root(r)
 
 
 def test_every_button_icon_has_images():
@@ -35,7 +33,7 @@ def test_ribbon_groups_and_buttons(root):
     big = g.large("編集を始める", lambda: None, style="RibbonEdit.TButton")
     small = g.small("最新を読み込む", lambda: None)
     g2 = rb.group("記録")
-    gone = g2.small("消す", lambda: None)
+    gone = g2.small("削除", lambda: None)
     root.update()
     assert str(big.cget("compound")) == "top" and str(small.cget("compound")) == "left"
     assert big.cget("image") and small.cget("image")

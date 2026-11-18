@@ -115,10 +115,10 @@ class CaseApp(ClosingUI, SharedApp):
         f.add_command(label="CSV から取り込む…（編集モード）", command=self.import_csv)
         self.edit_only_menu(f)
         f.add_separator()
-        f.add_command(label="この PC の設定…", command=self.open_settings)
-        f.add_command(label="事務所の設定（選択肢・フォルダ規則）…", command=self.open_office)
-        f.add_separator()
         f.add_command(label="閉じる", command=self.on_close)
+        f.add_separator()
+        f.add_command(label="この PC の設定…", command=self.open_settings)
+        f.add_command(label="事務所の設定…", command=self.open_office)
         bar.add_cascade(label="ファイル", menu=f)
         c = tk.Menu(bar, tearoff=False)
         # 「事件番号の確認」（現行の CheckNumbers）は、2026-11-11 になくした（班長決定）。カードの書き込み・新しい事件・
@@ -146,8 +146,8 @@ class CaseApp(ClosingUI, SharedApp):
         g.small("コピー", self.copy_selected_rows,
                 tip="選んでいる事件の、一覧に出している値を、タブ区切りでコピーします（見出しは付けません）。Excel などに"
                     "貼り付けられます。何件かを選んでいれば、その全部をコピーします。")
-        self.edit_only(g.small("消す", self.delete_selected,
-                               tip="選んでいる事件を消します（確かめてから）。データフォルダは消しません。編集モードで使えます。"))
+        self.edit_only(g.small("削除", self.delete_selected,
+                               tip="選んでいる事件を削除します（確かめてから）。データフォルダは消しません。編集モードで使えます。"))
         # 書類は、それまでの「書類を作る」のメニューを、3つのボタンにした（2026-11-13 リボンにしたとき）
         g = rb.group("書類")
         g.small("事件メモ", self.make_memo,
@@ -355,7 +355,7 @@ class CaseApp(ClosingUI, SharedApp):
             try:
                 open_path(row[m.COL["TeamsURL"]])
             except OSError as e:
-                messagebox.showwarning(TITLE, f"URL を開けませんでした。\n{e}", parent=self.root)
+                messagebox.showwarning(TITLE, f"URL を開けませんでした。\n\n{self.error_text(e)}", parent=self.root)
 
     # ------------------------------------------------------------ 事件の追加・書き込み・削除
 
@@ -573,7 +573,7 @@ class CaseApp(ClosingUI, SharedApp):
         try:
             open_path(path)
         except OSError as e:
-            messagebox.showwarning(TITLE, f"開けませんでした。\n{e}", parent=self.root)
+            messagebox.showwarning(TITLE, f"開けませんでした。\n\n{self.error_text(e)}", parent=self.root)
 
     # ------------------------------------------------------------ 事件メモ
 
@@ -588,7 +588,7 @@ class CaseApp(ClosingUI, SharedApp):
         try:
             data = memo.build_pdf(row, court=m.court_numbers(self.data.tables, row[m.COL["裁判所名"]]))
         except Exception as e:
-            messagebox.showerror(TITLE, f"事件メモを作れませんでした。\n{e}", parent=self.root)
+            messagebox.showerror(TITLE, f"事件メモを作れませんでした。\n\n{self.error_text(e)}", parent=self.root)
             return
         self._save_document(row, data, memo.memo_file_name(row), "事件メモ")
 
@@ -626,7 +626,7 @@ class CaseApp(ClosingUI, SharedApp):
         try:
             path.write_bytes(data)
         except OSError as e:
-            messagebox.showerror(TITLE, f"ファイルの保存に失敗しました。\n{e}", parent=self.root)
+            messagebox.showerror(TITLE, f"ファイルの保存に失敗しました。\n\n{self.error_text(e)}", parent=self.root)
             return
         self.work_label.configure(text=f"{what}を保存しました（{path.name}）")
         try:
@@ -646,7 +646,7 @@ class CaseApp(ClosingUI, SharedApp):
         try:
             data = courtdocs.build_hearing_ack(row, dlg.result)
         except Exception as e:
-            messagebox.showerror(TITLE, f"期日請書を作れませんでした。\n{e}", parent=self.root)
+            messagebox.showerror(TITLE, f"期日請書を作れませんでした。\n\n{self.error_text(e)}", parent=self.root)
             return
         self._save_document(row, data, courtdocs.file_name("期日請書", row), "期日請書")
 
@@ -666,7 +666,7 @@ class CaseApp(ClosingUI, SharedApp):
         try:
             data = courtdocs.build_send_letter(row, dlg.result)
         except Exception as e:
-            messagebox.showerror(TITLE, f"送付書を作れませんでした。\n{e}", parent=self.root)
+            messagebox.showerror(TITLE, f"送付書を作れませんでした。\n\n{self.error_text(e)}", parent=self.root)
             return
         self._save_document(row, data, courtdocs.file_name("送付書", row), "送付書")
     # ------------------------------------------------------------ 確認・設定
@@ -698,7 +698,8 @@ class CaseApp(ClosingUI, SharedApp):
             else:
                 self._show_list("データフォルダの確認", [f"事件番号 {p.number}：{p.message}" for p in probs])
         self.bg.run(lambda: m.check_folders(rows, lambda v: m.resolve_folder(v, self.cfg.data_root)), _done,
-                    lambda e: messagebox.showerror(TITLE, str(e), parent=self.root))
+                    lambda e: messagebox.showerror(TITLE, "データフォルダを確かめられませんでした。\n\n"
+                                                   + self.error_text(e, record=False), parent=self.root))
 
     def open_settings(self):
         dlg = SettingsDialog(self.root, settings.CaseConfig(**vars(self.cfg)))

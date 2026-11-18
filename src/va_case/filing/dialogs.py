@@ -38,7 +38,7 @@ class OfficeDialog(tk.Toplevel):
     def __init__(self, parent, tables, *, editable, tantou_choices=(), data_root=None):
         super().__init__(parent)
         self.withdraw()
-        self.title("事務所の設定（保管先・読込フォルダ・複製作成先など）")
+        self.title("事務所の設定")
         self.transient(parent)
         self.result = None
         self.editable = editable

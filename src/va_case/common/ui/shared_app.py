@@ -24,7 +24,7 @@ from tkinter import filedialog, messagebox, ttk
 from .. import backup as backupmod
 from .. import diagnostics
 from .. import csvio
-from ..errors import ConflictError, LockedByOtherError, NotEditingError, SharedError
+from ..errors import ConflictError, LockedByOtherError, NotEditingError, SharedError, describe
 from ..master import create_master
 from ..search import Query, normalize
 from ..store import SharedStore
@@ -374,7 +374,7 @@ class SharedApp(DiagnosticsHost, OfficeHost, ListView):
         try:
             csvio.export_csv(path, self.csv_columns(), rows)
         except OSError as e:
-            messagebox.showerror(self.TITLE, f"書き出せませんでした。\n{e}", parent=self.root)
+            messagebox.showerror(self.TITLE, f"書き出せませんでした。\n\n{self.error_text(e)}", parent=self.root)
             return
         messagebox.showinfo(self.TITLE, f"{len(rows)} 件を出力しました。\n{path}\n\n{self.CSV_NOTE}"
                                         "使い終わったら消すなど、置き場所に気をつけてください。", parent=self.root)
@@ -393,7 +393,7 @@ class SharedApp(DiagnosticsHost, OfficeHost, ListView):
             rows, same = self.csv_drop_existing(self.data.tables, got.rows)
             self.csv_add(self.data.tables, rows)   # 先に確かめる（書き込むときにも、もう一度確かめる）
         except (csvio.CsvError, ValueError, OSError) as e:
-            messagebox.showerror(self.TITLE, f"取り込めませんでした。何も変えていません。\n\n{e}", parent=self.root)
+            messagebox.showerror(self.TITLE, f"取り込めませんでした。何も変えていません。\n\n{self.error_text(e)}", parent=self.root)
             return
         if not rows:
             messagebox.showinfo(self.TITLE, f"CSV の {len(got.rows)} 件は、すべて、すでに同じ記録があります。"
@@ -453,7 +453,7 @@ class SharedApp(DiagnosticsHost, OfficeHost, ListView):
                 try:
                     create_master(path, self.TOOL, self.empty_tables(), self.store.identity)
                 except (OSError, SharedError) as e:
-                    messagebox.showerror(self.TITLE, str(e), parent=self.root)
+                    messagebox.showerror(self.TITLE, self.error_text(e), parent=self.root)
                     return
         self.reload()
 
@@ -504,8 +504,7 @@ class SharedApp(DiagnosticsHost, OfficeHost, ListView):
     def _on_load_error(self, e):
         self.loading = False
         self.work_label.configure(text="読み込めませんでした")
-        msg = str(e) if isinstance(e, (SharedError, OSError)) else f"読み込み中に誤りが起きました：{e!r}"
-        messagebox.showerror(self.TITLE, msg, parent=self.root)
+        messagebox.showerror(self.TITLE, self.error_text(e, record=False, what="読み込めませんでした。"), parent=self.root)
 
     def _daily_backup(self):
         if self.backup_done_on == date.today() or not self.cfg.backup_folder:
@@ -521,7 +520,7 @@ class SharedApp(DiagnosticsHost, OfficeHost, ListView):
                                        f"した。\n{self.cfg.backup_folder}\n\n暗号化した仮想ドライブを使っている場合は、"
                                        "開いているかを確かめてください。", parent=self.root)
         self.bg.run(lambda: backupmod.daily_backup(self.store.path, self.cfg.backup_folder), _done,
-                    lambda e: self.work_label.configure(text=f"バックアップを作れませんでした：{e}"))
+                    lambda e: self.work_label.configure(text=f"バックアップを作れませんでした：{describe(e, detail=False)}"))
 
     # ------------------------------------------------------------ モードの表示
 
@@ -546,7 +545,7 @@ class SharedApp(DiagnosticsHost, OfficeHost, ListView):
         for box in self._mode_cards:
             box.configure(style="EditCard.TFrame" if self.editing else "Card.TFrame")
         self._apply_edit_only()
-        self.root.title(f"{self.TITLE} － {'編集モード' if self.editing else '閲覧モード'}")
+        self.root.title(f"{self.TITLE} - {'編集モード' if self.editing else '閲覧モード'}")
         if not self._waiting:
             text = "編集を終える" if self.editing else "編集を始める"
             self.edit_button.configure(text=text, style=self._edit_button_style(), **self._edit_button_image(text))
@@ -616,7 +615,8 @@ class SharedApp(DiagnosticsHost, OfficeHost, ListView):
             self._cancel_switching()
             self._update_mode()
             self.work_label.configure(text="編集を始められませんでした")
-            messagebox.showwarning(self.TITLE, str(e), parent=self.root)
+            messagebox.showwarning(self.TITLE, self.error_text(e, record=False, what="編集を始められませんでした。"),
+                                   parent=self.root)
             if isinstance(e, (LockedByOtherError, ConflictError)):
                 self.reload()
         self.bg.run(self.store.begin_edit, _done, _err)
@@ -786,8 +786,8 @@ class SharedApp(DiagnosticsHost, OfficeHost, ListView):
         self.bg.run(_work, _done, _err)
 
     def show_write_error(self, e):
-        msg = str(e) if isinstance(e, (SharedError, ValueError, OSError)) else f"書き込み中に誤りが起きました：{e!r}"
-        messagebox.showerror(self.TITLE, msg, parent=self.root)
+        messagebox.showerror(self.TITLE, self.error_text(e, record=False, what="書き込めませんでした。"),
+                             parent=self.root)
 
     def _next_write(self):
         if self._write_queue and not self.writing:

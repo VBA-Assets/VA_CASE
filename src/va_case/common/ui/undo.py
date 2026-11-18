@@ -15,6 +15,8 @@
 """
 import tkinter as tk
 
+from .keys import ctrl_sequences
+
 MAX_STEPS = 200          # 覚える変更の数（古いものから捨てる）
 
 
@@ -41,9 +43,9 @@ class EditHistory:
 
     def bind_keys(self, widget):
         """Ctrl+Z・Ctrl+Y だけを付ける（一覧など、入力欄でない部品）。"""
-        for seq in ("<Control-z>", "<Control-Z>"):
+        for seq in ctrl_sequences(widget, "z"):     # Mac では ⌘ にも（keys.py）
             widget.bind(seq, lambda e: (self.undo(), "break")[1])
-        for seq in ("<Control-y>", "<Control-Y>"):
+        for seq in ctrl_sequences(widget, "y"):
             widget.bind(seq, lambda e: (self.redo(), "break")[1])
 
     # ------------------------------------------------------------ 覚える

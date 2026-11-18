@@ -38,7 +38,6 @@ class ReceiptApp(FileStoreApp):
     DISPLAY_COLUMNS = DISPLAY_COLUMNS
     COLUMN_WIDTHS = COLUMN_WIDTHS
     PANEL_FIELDS = PANEL_FIELDS
-    OFFICE_MENU_LABEL = "事務所の設定（種別と保管フォルダ・読込フォルダなど）…"
     ABOUT_LINE = "領収書などのファイルを、種別ごとのフォルダに保管する"
     CSV_NOTE = "CSV には、相手先・金額などがそのまま入っています。"
     FIRST_FIELD = "種別"

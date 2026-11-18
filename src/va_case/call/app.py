@@ -78,10 +78,10 @@ class CallApp(SharedApp):
         f.add_command(label="CSV から取り込む…（編集モード）", command=self.import_csv)
         self.edit_only_menu(f)
         f.add_separator()
-        f.add_command(label="この PC の設定…", command=self.open_settings)
-        f.add_command(label="事務所の設定（所員・選択肢）…", command=self.open_office)
-        f.add_separator()
         f.add_command(label="閉じる", command=self.on_close)
+        f.add_separator()
+        f.add_command(label="この PC の設定…", command=self.open_settings)
+        f.add_command(label="事務所の設定…", command=self.open_office)
         bar.add_cascade(label="ファイル", menu=f)
         self.build_help_menu(bar)
         self.root.configure(menu=bar)
@@ -99,8 +99,8 @@ class CallApp(SharedApp):
         g.small("コピー", self.copy_selected_rows,
                 tip="選んでいるメモを、一覧に出している列のタブ区切りでコピーします（見出しは付けません）。Excel などに"
                     "貼り付けられます。何件かを選んでいれば、その全部をコピーします。")
-        self.edit_only(g.small("消す", self.delete_memo,
-                               tip="選んでいるメモを消します（確かめてから）。編集モードで使えます。"))
+        self.edit_only(g.small("削除", self.delete_memo,
+                               tip="選んでいるメモを削除します（確かめてから）。編集モードで使えます。"))
         self.build_search_group(rb)
 
     def _build_body(self):
@@ -560,7 +560,7 @@ class CallApp(SharedApp):
         try:
             open_path(url)
         except OSError as e:
-            messagebox.showerror(TITLE, f"メールソフトを開けませんでした。既定のメールソフトを確かめてください。\n{e}",
+            messagebox.showerror(TITLE, f"メールソフトを開けませんでした。既定のメールソフトを確かめてください。\n\n{self.error_text(e)}",
                                  parent=self.root)
             return
         if pasted:

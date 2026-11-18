@@ -13,6 +13,7 @@ from tkinter import messagebox
 
 from ... import VERSION_LABEL
 from .. import diagnostics
+from ..errors import describe, is_for_user
 
 
 class DiagnosticsHost:
@@ -34,6 +35,16 @@ class DiagnosticsHost:
             traceback.print_exception(exc_type, exc, tb)
         except Exception:
             pass
+
+    def error_text(self, e, record=True, what=""):
+        """例外を画面に出すときの文（errors.describe）。利用者向けに書いた文でない例外は、診断情報に覚える
+        （標準 02「メッセージとエラー」。2026-11-19）。裏の処理（self.bg）の誤りは、そこで覚えているので record=False。
+        what：利用者向けの文でないときだけ、前に置く文（「書き込めませんでした。」など。何をしていたかが分かるように）。"""
+        if is_for_user(e):
+            return describe(e)
+        if record:
+            self.errors.record(e, "画面の処理")
+        return f"{what}\n\n{describe(e)}" if what else describe(e)
 
     ABOUT_LINE = ""     # 「について」に出す、ツールの1行の説明（各ツールで決める）
 

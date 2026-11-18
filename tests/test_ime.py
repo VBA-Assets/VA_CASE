@@ -6,20 +6,19 @@ from tkinter import ttk
 import pytest
 
 from va_case.common.ui import ime, theme
+from conftest import reset_root
 
 pytestmark = pytest.mark.skipif(os.name != "nt", reason="IME の書体は Windows だけで合わせる")
 
 
 @pytest.fixture(scope="module")
-def root():
-    try:
-        r = tk.Tk()
-    except tk.TclError:
-        pytest.skip("画面がない環境")
+def root(tk_root):   # Tk は試験の全体で1つ（conftest の tk_root）。この試験の後で、作った部品を片付ける
+    r = tk_root
+    r.deiconify()
     theme.apply_theme(r)
     r.geometry("+0+0")
     yield r
-    r.destroy()
+    reset_root(r)
 
 
 def test_each_input_gets_its_own_font(root):

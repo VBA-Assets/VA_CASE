@@ -7,18 +7,16 @@ import pytest
 
 from va_case.common.ui import theme
 from va_case.common.ui.shared_app import SharedApp
+from conftest import reset_root
 
 
 @pytest.fixture(scope="module")
-def root():
-    try:
-        r = tk.Tk()
-    except tk.TclError:
-        pytest.skip("画面がない環境")
+def root(tk_root):   # Tk は試験の全体で1つ（conftest の tk_root）。この試験の後で、作った部品を片付ける
+    r = tk_root
     r.withdraw()
     theme.apply_theme(r)
     yield r
-    r.destroy()
+    reset_root(r)
 
 
 ROWS = {

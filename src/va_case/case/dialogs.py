@@ -34,7 +34,7 @@ class OfficeDialog(tk.Toplevel):
     def __init__(self, parent, tables, *, editable):
         super().__init__(parent)
         self.withdraw()
-        self.title("事務所の設定（選択肢・フォルダ規則）")
+        self.title("事務所の設定")
         self.transient(parent)
         self.result = None
         self.editable = editable
@@ -107,7 +107,7 @@ class OfficeDialog(tk.Toplevel):
         rb = ttk.Frame(page2)
         rb.pack(fill="x", pady=(6, 0))
         self.choices_tables = tables
-        for text, cmd in (("足す", self._add_rule), ("直す", self._edit_rule), ("消す", self._del_rule)):
+        for text, cmd in (("足す", self._add_rule), ("直す", self._edit_rule), ("削除", self._del_rule)):
             b = ttk.Button(rb, text=text, style="Small.TButton", command=cmd)
             b.pack(side="left", padx=(0, 6))
             if not editable:
@@ -241,7 +241,9 @@ class HearingAckDialog(tk.Toplevel):
         from . import courtdocs
         super().__init__(parent)
         self.withdraw()
-        self.title(f"期日請書　{row[m.COL['事件呼名']]}")
+        # 題名は、する事の名前だけ。事務所の外に出す文書の画面には、事件呼名を出さない（2026-11-19 班長指示「期日請書・
+        # 送付書など、事務所外に出す文書には、事件呼名は記載しない」。それまでは「期日請書　<事件呼名>」）
+        self.title("期日請書")
         self.transient(parent)
         self.resizable(False, False)
         self.result = None
@@ -304,7 +306,7 @@ class SendLetterDialog(tk.Toplevel):
         from . import courtdocs
         super().__init__(parent)
         self.withdraw()
-        self.title(f"送付書　{row[m.COL['事件呼名']]}")
+        self.title("送付書")   # 期日請書と同じく、事件呼名を出さない（2026-11-19 班長指示）
         self.transient(parent)
         self.resizable(False, False)
         self.result = None

@@ -20,6 +20,7 @@ from pathlib import Path
 from tkinter import ttk
 
 from . import theme
+from .keys import ctrl_sequences
 
 PDF_EXTENSIONS = {".pdf"}
 IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".tif", ".tiff", ".bmp", ".gif"}
@@ -259,9 +260,9 @@ class PreviewPane(ttk.Frame):
         self.canvas.bind("<ButtonRelease-1>", self._release)
         self.canvas.bind("<Double-Button-1>", lambda e: self._select_unit(e, "word"))
         self.canvas.bind("<Triple-Button-1>", lambda e: self._select_unit(e, "line"))
-        for key in ("<Control-c>", "<Control-C>", "<Control-Insert>"):
+        for key in ctrl_sequences(self.canvas, "c") + ["<Control-Insert>"]:     # Mac では ⌘ にも（keys.py）
             self.canvas.bind(key, lambda e: (self.copy_selection(), "break")[1])
-        for key in ("<Control-a>", "<Control-A>"):
+        for key in ctrl_sequences(self.canvas, "a"):
             self.canvas.bind(key, lambda e: (self._select_page(), "break")[1])
         for key, step in (("<Shift-Left>", -1), ("<Shift-Right>", 1)):
             self.canvas.bind(key, lambda e, s=step: (self.extend_by_char(s), "break")[1])

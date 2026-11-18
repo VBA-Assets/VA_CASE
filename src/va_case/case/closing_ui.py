@@ -37,7 +37,7 @@ class ClosingUI:
         try:
             p = closing.plan(row, self.rows, self.data.tables[m.FOLDER_RULES], self.cfg)
         except (ValueError, FolderMissingError) as e:
-            messagebox.showinfo(TITLE, "終了処理（データフォルダの ZIP の作成）をしませんでした。\n\n" + str(e),
+            messagebox.showinfo(TITLE, "終了処理（データフォルダの ZIP の作成）をしませんでした。\n\n" + self.error_text(e),
                                 parent=self.root)
             return
         others = [r for r in self.rows if r[m.COL["事件番号"]] in (p.members or [])[1:]]
@@ -72,7 +72,7 @@ class ClosingUI:
                 try:
                     closing.delete_source(p.source)
                 except OSError as e:
-                    messagebox.showerror(TITLE, f"元のフォルダを消せませんでした。手で消してください。\n{e}",
+                    messagebox.showerror(TITLE, f"元のフォルダを消せませんでした。手で消してください。\n\n{self.error_text(e)}",
                                          parent=self.root)
             else:
                 messagebox.showinfo(TITLE, "元のフォルダは残しました。確かめてから、手で消してください。", parent=self.root)
@@ -104,7 +104,7 @@ class ClosingUI:
             if isinstance(e, closing.Cancelled):
                 messagebox.showinfo(TITLE, "ZIP の作成を取り消しました。元のデータフォルダはそのままです。", parent=self.root)
             else:
-                messagebox.showerror(TITLE, f"ZIP を作れませんでした。元のデータフォルダはそのままです。\n{e}",
+                messagebox.showerror(TITLE, f"ZIP を作れませんでした。元のデータフォルダはそのままです。\n\n{self.error_text(e, record=False)}",
                                      parent=self.root)
         self.bg.run(_work, _done, _err)
 
@@ -128,7 +128,7 @@ class ClosingUI:
             p = closing.restore_plan(row, self.cfg)
         except (ValueError, FolderMissingError) as e:
             messagebox.showinfo(TITLE, "終了処理を戻しませんでした（データフォルダは「保管庫：…」のままです）。\n\n"
-                                       + str(e), parent=self.root)
+                                       + self.error_text(e), parent=self.root)
             return
         if p.kind == "moved":
             messagebox.showinfo(
@@ -193,7 +193,7 @@ class ClosingUI:
             if isinstance(e, closing.Cancelled):
                 messagebox.showinfo(TITLE, "展開を取り消しました。移送待ちの ZIP はそのままです。", parent=self.root)
             else:
-                messagebox.showerror(TITLE, f"展開できませんでした。移送待ちの ZIP はそのままです。\n{e}",
+                messagebox.showerror(TITLE, f"展開できませんでした。移送待ちの ZIP はそのままです。\n\n{self.error_text(e, record=False)}",
                                      parent=self.root)
         self.bg.run(_work, _done, _err)
 
@@ -226,7 +226,7 @@ class ClosingUI:
                 try:
                     closing.delete_zip(p.zip_path, self.cfg.outbox)
                 except OSError as e:
-                    messagebox.showerror(TITLE, f"ZIP を消せませんでした。手で消してください。\n{e}", parent=self.root)
+                    messagebox.showerror(TITLE, f"ZIP を消せませんでした。手で消してください。\n\n{self.error_text(e)}", parent=self.root)
             else:
                 messagebox.showinfo(TITLE, "移送待ちの ZIP は残しました。保管庫へ移さないよう、手で消してください。",
                                     parent=self.root)

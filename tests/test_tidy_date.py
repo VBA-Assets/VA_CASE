@@ -9,6 +9,7 @@ from va_case.common.dates import compact_datetime
 from va_case.common.ui.file_store_app import FileStoreApp
 from va_case.filing import app as filing_app
 from va_case.receipt import app as receipt_app
+from conftest import reset_root
 
 
 @pytest.mark.parametrize("text, receipt, filing", [
@@ -41,13 +42,11 @@ def test_unreadable_forms(text):
 
 
 @pytest.fixture(scope="module")
-def root():
-    try:
-        r = tk.Tk()
-    except tk.TclError:
-        pytest.skip("画面がない環境")
+def root(tk_root):   # Tk は試験の全体で1つ（conftest の tk_root）。この試験の後で、作った部品を片付ける
+    r = tk_root
+    r.deiconify()
     yield r
-    r.destroy()
+    reset_root(r)
 
 
 def make(cls, root, state="open", editing=True):

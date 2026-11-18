@@ -17,7 +17,7 @@ BUTTON_ICONS = {
     # 「斜線の入った鉛筆が良い」。それまでは［編集を始める］と同じ鉛筆。いったん保存のアイコンにしたが、直した値は行を
     # 移るたびに書き込んでいて、編集を終える働きの中心は書き込みではないので、改めた）
     "編集を始める": "edit", "編集を終える": "edit_off", "最新を読み込む": "arrow_sync",
-    "新しい事件": "document_add", "新しいメモ": "document_add", "ファイルを読み込む": "folder_open", "消す": "delete",
+    "新しい事件": "document_add", "新しいメモ": "document_add", "ファイルを読み込む": "folder_open", "削除": "delete",
     "コピー": "copy",
     "事件メモ": "document_text", "期日請書": "calendar_checkmark", "送付書": "send",
     "結果を表示": "search", "すべてを表示": "filter_dismiss",

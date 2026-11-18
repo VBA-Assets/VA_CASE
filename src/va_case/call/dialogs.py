@@ -31,7 +31,7 @@ class OfficeDialog(tk.Toplevel):
     def __init__(self, parent, tables, *, editable):
         super().__init__(parent)
         self.withdraw()
-        self.title("事務所の設定（所員・選択肢）")
+        self.title("事務所の設定")
         self.transient(parent)
         self.result = None
         nb = ttk.Notebook(self)

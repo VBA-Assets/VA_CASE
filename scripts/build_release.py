@@ -1,6 +1,6 @@
 """配布用のリリース（release_VerNNN\\VA_Case_VerNNN\\ と、dist\\ の zip）を組み立てる。
 
-VA Document の build_release.py と同じ作り。統合版のインストーラー（VA_Caseシリーズ共通\\統合版）は、
+VA Document の build_release.py と同じ作り。統合版のインストーラー（VA_Caseシリーズ\\共通\\統合版）は、
 release_VerNNN\\VA_Case_VerNNN\\ を直接参照する。
 
 前提（このスクリプトはビルドそのものはしない。先に済ませておく）：

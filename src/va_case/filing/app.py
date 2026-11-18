@@ -13,7 +13,7 @@ from tkinter import messagebox, ttk
 
 from ..case import model as case_model
 from ..common import dates
-from ..common.errors import SharedError
+from ..common.errors import SharedError, describe
 from ..common.master import read_master
 from ..common.search import normalize
 from ..common.ui import autocomplete
@@ -46,7 +46,6 @@ class FilingApp(FileStoreApp):
     DISPLAY_COLUMNS = DISPLAY_COLUMNS
     COLUMN_WIDTHS = COLUMN_WIDTHS
     PANEL_FIELDS = PANEL_FIELDS
-    OFFICE_MENU_LABEL = "事務所の設定（保管先・読込フォルダ・複製作成先など）…"
     ABOUT_LINE = "受け取ったファイルを、事件のフォルダに保管する"
     CSV_NOTE = "CSV には、事件呼名などがそのまま入っています。"
     FIRST_FIELD = "事件呼名"
@@ -134,7 +133,7 @@ class FilingApp(FileStoreApp):
                 return ("error", f"VA Case の共有データではありません：{path}")
             return ("ok", data.tables)
         except (SharedError, OSError) as e:
-            return ("error", str(e))
+            return ("error", describe(e, detail=False))
 
     def on_extra(self, extra):
         kind, value = extra

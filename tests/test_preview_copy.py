@@ -2,13 +2,13 @@
 良い」「コピーもCtrl+Cで行う」）の試験。書類はすべて架空。"""
 import io
 import time
-import tkinter as tk
 from types import SimpleNamespace
 
 import pytest
 
 from va_case.common import ocr, page_text as pt
 from va_case.common.ui import preview as pv
+from conftest import reset_root
 
 pdfium = pytest.importorskip("pypdfium2")
 Image = pytest.importorskip("PIL.Image")
@@ -140,14 +140,12 @@ def test_ocr_unavailable(monkeypatch):
 # ------------------------------------------------------------ プレビューの欄で選ぶ
 
 @pytest.fixture(scope="module")
-def root():
-    try:
-        r = tk.Tk()
-    except tk.TclError:
-        pytest.skip("画面がない環境")
+def root(tk_root):   # Tk は試験の全体で1つ（conftest の tk_root）。この試験の後で、作った部品を片付ける
+    r = tk_root
+    r.deiconify()
     r.geometry("420x640")
     yield r
-    r.destroy()
+    reset_root(r)
 
 
 def wait_until(root, cond, seconds=15):

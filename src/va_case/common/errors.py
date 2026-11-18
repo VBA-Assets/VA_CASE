@@ -1,4 +1,11 @@
-"""共通部品が利用者に知らせる事態。str(例外) が、そのまま利用者に示す文になる。"""
+"""共通部品が利用者に知らせる事態。str(例外) が、そのまま利用者に示す文になる。
+
+末尾の describe は、例外を画面に出すときの文を作る（標準 02「メッセージとエラー」。2026-11-19）。
+"""
+import re
+
+# 診断情報の案内（予期しない誤りのときに添える）
+DIAGNOSTICS_HINT = "誤りの種類と場所は、［ヘルプ］→［診断情報をコピー］でコピーできます（不具合のご連絡に使えます）。"
 
 
 class SharedError(Exception):
@@ -110,3 +117,43 @@ class WriteVerifyError(SharedError):
         super().__init__(
             f"共有データを書き込んだ後の確かめで、書いた内容と一致しませんでした。\n{path}\n\n"
             "ほかの PC の書き込みや同期と重なった可能性があります。もう一度読み込んで、内容を確かめてください。")
+
+
+# ---------------------------------------------------------------- 例外を画面に出すときの文
+
+_JAPANESE = re.compile(r"[\u3040-\u30ff\u4e00-\u9fff]")
+
+
+def is_for_user(e):
+    """例外の文が、利用者向けに書いた文か。
+
+    このパッケージの例外（SharedError・StoringError・CsvError など）と、このパッケージが日本語の文で投げる ValueError など
+    は、そのまま見せる文として書いてある。OSError（Windows の文と英語の混じった文）や、思わぬ例外は、そうでない。
+    """
+    if type(e).__module__.startswith("va_case"):
+        return True
+    if isinstance(e, OSError):
+        return False
+    return bool(_JAPANESE.search(str(e)))
+
+
+def describe(e, detail=True):
+    """例外を画面に出すときの文。利用者向けに書いた文なら、そのまま返す。そうでなければ、例外の文（英語やプログラムの
+    言葉）を出さず、何が起きたかの要旨を返す。detail が真なら、ファイルの場所（分かるとき）と、診断情報の案内を添える。"""
+    if is_for_user(e):
+        return str(e)
+    if isinstance(e, PermissionError):
+        text = "ほかのソフトがファイルを開いているか、読み書きする権限がありません。"
+    elif isinstance(e, FileNotFoundError):
+        text = "ファイルかフォルダが見つかりません。"
+    elif isinstance(e, FileExistsError):
+        text = "同じ名前のファイルかフォルダが、すでにあります。"
+    elif isinstance(e, OSError):
+        text = "ファイルかフォルダを読み書きできませんでした。共有フォルダの接続などを確かめてください。"
+    else:
+        text = "予期しない誤りが起きました。"
+    if not detail:
+        return text
+    name = getattr(e, "filename", None)
+    where = f"\n{name}" if isinstance(name, str) and name else ""
+    return f"{text}{where}\n\n{DIAGNOSTICS_HINT}"

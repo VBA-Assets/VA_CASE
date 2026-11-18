@@ -9,6 +9,7 @@ from tkinter import ttk
 import pytest
 
 from va_case.common.ui import autocomplete as ac
+from conftest import reset_root
 
 CANDIDATES = ["東京地方裁判所", "東京高等裁判所", "大阪地方裁判所", "Abc商店"]
 
@@ -29,14 +30,11 @@ def test_column_values_newest_first_and_lines():
 
 
 @pytest.fixture(scope="module")
-def root():
-    try:
-        r = tk.Tk()
-    except tk.TclError:
-        pytest.skip("画面がない環境")
+def root(tk_root):   # Tk は試験の全体で1つ（conftest の tk_root）。この試験の後で、作った部品を片付ける
+    r = tk_root
     r.withdraw()
     yield r
-    r.destroy()
+    reset_root(r)
 
 
 def type_into(root, widget, text):

@@ -15,3 +15,6 @@ docs/manual/*.pdf
 
 # 試用の共有フォルダ（scripts\make_trial.py で作る。架空のデータ）
 試験用/
+
+# GitHub で公開する写し（別の git。VBA-Assets/VA_CASE。2026-11-18 に ..\VA_CASE_GitHub から移した）
+/GitHub/

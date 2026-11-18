@@ -17,7 +17,7 @@ import tkinter as tk
 from pathlib import Path
 from tkinter import filedialog, messagebox, ttk
 
-from ..errors import SharedError
+from ..errors import describe
 from .. import dates, storing, trash
 from ..paths import portable, resolve_folder
 from . import autocomplete, theme
@@ -112,10 +112,10 @@ class FileStoreApp(SharedApp):
         f.add_command(label="CSV から取り込む…（編集モード）", command=self.import_csv)
         self.edit_only_menu(f)
         f.add_separator()
+        f.add_command(label="閉じる", command=self.on_close)
+        f.add_separator()
         f.add_command(label="この PC の設定…", command=self.open_settings)
         f.add_command(label=self.OFFICE_MENU_LABEL, command=self.open_office)
-        f.add_separator()
-        f.add_command(label="閉じる", command=self.on_close)
         bar.add_cascade(label="ファイル", menu=f)
         v = tk.Menu(bar, tearoff=False)
         self.preview_var = tk.BooleanVar(value=getattr(self.cfg, "preview_visible", True))
@@ -136,9 +136,9 @@ class FileStoreApp(SharedApp):
                 tip="選んでいる行の、一覧に出している値（番号・日時・ファイル名など）を、タブ区切りでコピーします（見出しは"
                     "付けません）。ファイルそのものはコピーしません。Excel などに貼り付けられます。何行かを選んでいれば、"
                     "その全部をコピーします。")
-        self.edit_only(g.small("消す", self.delete_selected,
-                               tip="選んでいる未保管の行を消し、読込フォルダのファイルをごみ箱へ移します（確かめてから）。"
-                                   "保管済みの行は消せません。編集モードで使えます。"))
+        self.edit_only(g.small("削除", self.delete_selected,
+                               tip="選んでいる未保管の行を削除し、読込フォルダのファイルをごみ箱へ移します（確かめてから）。"
+                                   "保管済みの行は削除できません。編集モードで使えます。"))
         self.build_search_group(rb)
 
     def _build_body(self):
@@ -603,7 +603,7 @@ class FileStoreApp(SharedApp):
         try:
             open_path(path)
         except OSError as e:
-            messagebox.showwarning(self.TITLE, f"開けませんでした。\n{e}", parent=self.root)
+            messagebox.showwarning(self.TITLE, f"開けませんでした。\n\n{self.error_text(e)}", parent=self.root)
 
     def open_folder(self, column="保管フォルダ名"):
         self.flush_selected()
@@ -618,7 +618,7 @@ class FileStoreApp(SharedApp):
         try:
             open_path(path)
         except OSError as e:
-            messagebox.showwarning(self.TITLE, f"開けませんでした。\n{e}", parent=self.root)
+            messagebox.showwarning(self.TITLE, f"開けませんでした。\n\n{self.error_text(e)}", parent=self.root)
 
     def _next_open_number(self, after):
         """after の次の未保管（書き込み待ちでない）の行の番号。なければ前の方から探す。"""
@@ -692,12 +692,9 @@ class FileStoreApp(SharedApp):
             if isinstance(e, storing.StoringError):
                 msg = f"{e}\n\nこのファイルの移動を中止しました。"
             elif isinstance(e, PermissionError) and not moved:
-                msg = ("このファイルを移動できませんでした。ファイルが別のアプリケーションで開かれているかもしれません。\n"
-                       f"詳細：{e}")
-            elif isinstance(e, (SharedError, OSError, ValueError)):
-                msg = f"保管しませんでした（{where}）。\n\n{e}"
+                msg = "このファイルを移動できませんでした。ファイルが別のアプリケーションで開かれているかもしれません。"
             else:
-                msg = f"保管しませんでした（{where}）。\n{e!r}"
+                msg = f"保管しませんでした（{where}）。\n\n{self.error_text(e, record=False)}"
             messagebox.showerror(self.TITLE, msg, parent=self.root)
 
         self.pending.add(number)
@@ -776,7 +773,7 @@ class FileStoreApp(SharedApp):
             self._reshow_if_current(number)
             where = "ファイルは保管フォルダに戻しました" if holder else "ファイルは動かしていません"
             msg = f"{e}\n\nこのファイルの元のフォルダへの移動を中止しました。" if isinstance(e, storing.StoringError) \
-                else f"保管を取り消しませんでした（{where}）。\n\n{e}"
+                else f"保管を取り消しませんでした（{where}）。\n\n{self.error_text(e, record=False)}"
             messagebox.showerror(self.TITLE, msg, parent=self.root)
 
         self.pending.add(number)
@@ -838,9 +835,9 @@ class FileStoreApp(SharedApp):
         def on_error(e):
             if moved:
                 msg = ("ファイルはごみ箱へ移しましたが、行を消せませんでした。ごみ箱から元へ戻すか、「ファイルを読み込む」を押して"
-                       f"ください（行は、読み込んだときに消えます）。\n\n{e}")
+                       f"ください（行は、読み込んだときに消えます）。\n\n{self.error_text(e, record=False)}")
             else:
-                msg = f"消しませんでした（ファイルは動かしていません）。\n\n{e}"
+                msg = f"削除しませんでした（ファイルは動かしていません）。\n\n{self.error_text(e, record=False)}"
             messagebox.showerror(self.TITLE, msg, parent=self.root)
 
         self.write(lambda t, ctx: m.delete_row(t, number), f"行の削除（{row[m.COL['読込ファイル名']]}）", after,
@@ -949,7 +946,7 @@ class FileStoreApp(SharedApp):
                             continue
                         found.append(m.FoundFile(folder, name, mtime))
             except OSError as e:
-                warnings.append(f"{value} の読み込み時にエラーが発生しました：{e}")
+                warnings.append(f"{value} の読み込み時にエラーが発生しました：{describe(e, detail=False)}")
         return found, warnings
 
     # ------------------------------------------------------------ 設定

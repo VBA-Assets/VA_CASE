@@ -6,18 +6,16 @@ import pytest
 from va_case.case import model as m
 from va_case.case.card import CARD_LAYOUT, TEXT_FIELDS, CaseCard, row_values
 from va_case.common.ui import theme
+from conftest import reset_root
 
 
 @pytest.fixture(scope="module")
-def root():   # Tk は試験のファイルで1つだけ作る
-    try:
-        r = tk.Tk()
-    except tk.TclError:
-        pytest.skip("画面がない環境")
+def root(tk_root):   # Tk は試験の全体で1つ（conftest の tk_root）。この試験の後で、作った部品を片付ける
+    r = tk_root
     theme.apply_theme(r)
     r.withdraw()
     yield r
-    r.destroy()
+    reset_root(r)
 
 
 def make_row(number, **values):

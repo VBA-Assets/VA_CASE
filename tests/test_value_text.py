@@ -5,17 +5,16 @@ from tkinter import ttk
 import pytest
 
 from va_case.common.ui import theme
+from conftest import reset_root
 
 
 @pytest.fixture(scope="module")
-def root():
-    try:
-        r = tk.Tk()
-    except tk.TclError:
-        pytest.skip("画面がない環境")
+def root(tk_root):   # Tk は試験の全体で1つ（conftest の tk_root）。この試験の後で、作った部品を片付ける
+    r = tk_root
+    r.deiconify()
     theme.apply_theme(r)
     yield r
-    r.destroy()
+    reset_root(r)
 
 
 def test_value_text_can_be_selected_and_copied(root):
