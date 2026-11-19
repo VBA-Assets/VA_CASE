@@ -20,6 +20,7 @@ from pathlib import Path
 from tkinter import ttk
 
 from . import theme
+from ..errors import is_for_user
 from .keys import ctrl_sequences
 
 PDF_EXTENSIONS = {".pdf"}
@@ -181,7 +182,9 @@ class _Worker:
             kind, data = self._data(path)
             self.results.put(("text", token, index, page_text.load(kind, data, index), None))
         except (PreviewError, ocr.OcrUnavailable, ValueError) as e:
-            self.results.put(("text", token, index, None, str(e)))
+            # page_text が日本語で書いた文はそのまま出す。部品の ValueError（英語の文）は出さない（標準 02「メッセージとエラー」）
+            text = str(e) if is_for_user(e) else "このページの文字を取り出せませんでした。"
+            self.results.put(("text", token, index, None, text))
         except Exception:                     # 思わぬ誤りでも、文字を選べないと知らせるだけにする
             self.results.put(("text", token, index, None, "このページの文字を取り出せませんでした。"))
 

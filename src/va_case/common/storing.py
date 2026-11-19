@@ -15,6 +15,7 @@ import time
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from .errors import describe
 from .fileio import temp_path_for
 from . import shortcut
 
@@ -203,11 +204,11 @@ def undo_store(result):
         try:
             _retry(lambda: os.unlink(link.path))
         except OSError as e:
-            problems.append(f"{link.path}：{e}")
+            problems.append(f"{link.path}：{describe(e, detail=False)}")
     try:
         move_file(result.plan.target, result.plan.source)
     except (OSError, StoringError) as e:
-        problems.append(f"{result.plan.target} を {result.plan.source} へ戻せませんでした：{e}")
+        problems.append(f"{result.plan.target} を {result.plan.source} へ戻せませんでした：{describe(e, detail=False)}")
     if problems:
         raise StoringError("戻しきれなかったものがあります。手で直してください。\n" + "\n".join(problems))
 
@@ -258,7 +259,7 @@ def restore(p):
             _retry(lambda: os.unlink(link.path))
             removed.append(link)
         except OSError as e:
-            failed.append(f"{link.path}：{e}")
+            failed.append(f"{link.path}：{describe(e, detail=False)}")
     if failed:
         p.missing += [f"消せなかった：{x}" for x in failed]
     return removed

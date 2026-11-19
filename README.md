@@ -56,7 +56,7 @@ python -m PyInstaller va_case.spec --noconfirm
 
 ## 使い方
 
-配布物の `マニュアル\VA_Case_操作マニュアル_Ver103.pdf` をご覧ください（Markdown の原稿は
+配布物の `マニュアル\VA_Case_操作マニュアル_Ver104.pdf` をご覧ください（Markdown の原稿は
 `docs\manual\VA_Case_操作マニュアル.md`）。
 
 ## ライセンス

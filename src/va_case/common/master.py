@@ -23,7 +23,7 @@ from datetime import datetime
 from pathlib import Path
 
 from . import fileio
-from .errors import FolderMissingError, MasterCorruptError, MasterNotFoundError, SchemaMismatchError
+from .errors import FolderMissingError, MasterCorruptError, MasterNotFoundError, SchemaMismatchError, is_for_user
 
 FORMAT = "va_case.master"
 FORMAT_VERSION = 1
@@ -131,7 +131,9 @@ def parse(raw, path="(共有データ)"):
                           write_id=str(obj["write_id"]), written=dict(obj["written"]))
         validate_tables(tables)
     except (KeyError, TypeError, ValueError, AttributeError) as e:
-        raise MasterCorruptError(path, f"中身が欠けている：{e}") from None
+        # validate_tables が日本語で書いた文（「テーブル「事件」の列の名前が重複しています」など）だけを添える。
+        # KeyError などの文（'rows' などのプログラムの言葉）は出さない（標準 02「メッセージとエラー」）
+        raise MasterCorruptError(path, "中身が欠けている" + (f"：{e}" if is_for_user(e) else "")) from None
     if obj.get("sha256") != checksum(data):
         raise MasterCorruptError(path, "中身の確かめ（ハッシュ）が合わない")
     return data

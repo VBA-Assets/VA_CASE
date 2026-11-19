@@ -3,6 +3,8 @@
 末尾の describe は、例外を画面に出すときの文を作る（標準 02「メッセージとエラー」。2026-11-19）。
 """
 import re
+import traceback
+from pathlib import Path
 
 # 診断情報の案内（予期しない誤りのときに添える）
 DIAGNOSTICS_HINT = "誤りの種類と場所は、［ヘルプ］→［診断情報をコピー］でコピーできます（不具合のご連絡に使えます）。"
@@ -124,17 +126,30 @@ class WriteVerifyError(SharedError):
 _JAPANESE = re.compile(r"[\u3040-\u30ff\u4e00-\u9fff]")
 
 
+PACKAGE = (__package__ or "va_case").split(".")[0]   # このツールのパッケージの名前（写したツールでは、そのツールの名前になる）
+
+
+def raised_by_this_tool(e):
+    """例外が、このツールのコード（パッケージの中）で投げられたか。投げていない例外（作っただけ）は真とする。"""
+    frames = traceback.extract_tb(e.__traceback__)
+    if not frames:
+        return True
+    return PACKAGE in Path(frames[-1].filename).parts
+
+
 def is_for_user(e):
     """例外の文が、利用者向けに書いた文か。
 
     このパッケージの例外（SharedError・StoringError・CsvError など）と、このパッケージが日本語の文で投げる ValueError など
     は、そのまま見せる文として書いてある。OSError（Windows の文と英語の混じった文）や、思わぬ例外は、そうでない。
+    日本語を含むかだけでは決めない。部品の例外の文にも、日本語のファイル名が入ることがあるため、誤りが起きた場所が
+    このパッケージの中かも合わせて見る（標準 02「メッセージとエラー」。2026-11-19、VA mints で分かった）。
     """
-    if type(e).__module__.startswith("va_case"):
+    if type(e).__module__.split(".")[0] == PACKAGE:
         return True
     if isinstance(e, OSError):
         return False
-    return bool(_JAPANESE.search(str(e)))
+    return bool(_JAPANESE.search(str(e))) and raised_by_this_tool(e)
 
 
 def describe(e, detail=True):
